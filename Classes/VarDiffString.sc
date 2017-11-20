@@ -25,11 +25,11 @@ VarDiffString {
 	}
 
 	init { prevTokens = ""; this.diff0; }
-	diff { | tokens |
-		var changes = diffFunc.value(prevTokens, tokens);
-		prevTokens = tokens;
-		^changes
+
+	diff { | prevTokens, tokens |
+		^diffFunc.value(prevTokens, tokens);
 	}
+
 	value { | tokens |
 		var curSynthList, changes, newArgList, display, diffSelector, tokenList;
 		var token, si;
