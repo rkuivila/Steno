@@ -1,0 +1,108 @@
+TITLE:: VarDiffString
+
+summary:: String matching
+categories:: Little Languages, Live Coding
+
+related:: Tutorials/Steno Tutorial
+
+DESCRIPTION::
+
+VarDiffString generates one to one mappings of characters shared by a source and a target string.
+The mapping generated is represented as an array of triples: [character, sourceIndex, targetIndex].
+Unmapped characters in the source string have a targetIndex of nil and unmapped characters
+in the target string have a source index of nil.
+
+The method STRONG:: diff :: generates and returns the mapping.
+The method STRONG:: value :: generates the mapping and then calls user specified functions for each character inserted, removed, or retained.
+Different mapping criteria can be implemented as functions that take the source and target strings
+as arguments and return the mapping as an array of triples.
+
+CLASSMETHODS::
+
+METHOD::new
+
+ARGUMENT::insertFunc
+Specify what to do when a new element is inserted in the result. As arguments are passed: newToken, index, oldToken.
+CODE::
+d = VarDiffString(insertFunc: { |new| "Please say hello to: %\n".postf(new) });
+d.value("abc");
+d.value("bcd");
+::
+
+ARGUMENT::removeFunc
+Specify what to do when an element is removed. As arguments are passed: oldToken, index.
+
+CODE::
+d = VarDiffString(removeFunc: { |new| "Please say good bye to: %\n".postf(new) });
+d.value("abc");
+d.value("bcd");
+::
+
+ARGUMENT::keepFunc
+Specify what to do when an element is kept as it was.  As arguments are passed: oldToken, index.
+CODE::
+d = VarDiffString(keepFunc: { |old, i| "% says: 'I am still here, at index %'\n".postf(old, i); });
+d.value("abc");
+d.value("xxxabc");
+::
+
+ARGUMENT::beginFunc
+Specify what to do before the string is compared.  As arguments are passed: oldToken, index.
+CODE::
+(
+var new;
+d = VarDiffString(beginFunc: { new = List.new }, insertFunc: { |x| new.add(x) }, returnFunc: { new });
+)
+d.("abc");
+d.("abcxyz");
+::
+
+ARGUMENT::returnFunc
+Specify what to return from code::diff.value:: As arguments are passed the result of the functions for each line as an array.
+
+METHOD::ld
+Compute and return the Levenshtein distance matrix for the source and target string.
+
+ARGUMENT::s
+The source string
+
+ARGUMENT::t
+The target string
+
+METHOD::parseld
+Generate a mapping between the source and target strings with a minimal number of
+changes using the Levenshtein distance matrix.
+
+ARGUMENT::table
+The Levenshtein distance matrix
+
+ARGUMENT::s
+The source string
+
+ARGUMENT::t
+The target string
+
+
+METHOD::study
+Generate a representation of the Levenshtein distance matrix
+that includes the source string in the first column and the target
+string in the first row.
+
+ARGUMENT::s
+The source string
+
+ARGUMENT::t
+The target string
+
+For example:
+CODE::
+VarDiffString.study("abcd", "abc").do(_.postln)
+[  ,  , a, b, c ]
+[  , 0, 1, 2, 3 ]
+[ a, 1, 0, 1, 2 ]
+[ b, 2, 1, 0, 1 ]
+[ c, 3, 2, 1, 0 ]
+[ d, 4, 3, 2, 1 ]
+::
+
+
