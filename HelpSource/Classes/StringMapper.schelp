@@ -1,0 +1,99 @@
+TITLE:: StringMapper
+
+summary:: String matching
+categories:: Little Languages, Live Coding
+
+related:: Tutorials/Steno Tutorial
+
+DESCRIPTION::
+
+StringMapper generates one to one mappings of characters shared by a source and a target string.
+The mapping generated is represented as an array of triples: [character, sourceIndex, targetIndex].
+Unmapped characters in the source string have a targetIndex of nil and unmapped characters
+in the target string have a source index of nil.
+
+The method STRONG:: makeStringOfMapping :: takes a mapping and returns source and target strings
+with mapped characters capitalized.
+Different mapping criteria can be implemented as functions that take the source and target strings
+as arguments and return the mapping as an array of triples.
+
+CLASSMETHODS::
+
+METHOD::new
+
+INSTANCEMETHODS::
+METHOD::diff
+
+ARGUMENT::target
+The target string
+
+ARGUMENT::source
+An optional source string.  If left nil, the previous target string is used.
+
+RETURNS::
+The mapping generated is represented as an array of triples: [character, sourceIndex, targetIndex].
+Unmapped characters in the source string have a targetIndex of nil and unmapped characters
+in the target string have a source index of nil.
+
+METHOD::diffFunc
+The function assigned to the instance variable  STRONG:: diffFunc :: determines the behavior of STRONG:: diff ::. It should be defined to take a target and  source string as arguments and return a mapping array.
+
+METHOD::diff0
+Assigns to STRONG:: diffFunc :: a function that uses Levenshtein distance (also called edit distance) to determine the mapping. Character order is preserverd so it is not guaranteed  that all characters in common between source and target will be mapped. The mapping generated favors matches towards the end of the source and target strings
+
+METHOD::diff1
+Similar to STRONG:: diff0 :: but favors matches towards the beginning of the source and target strings.
+
+METHOD::diff2
+Unlike STRONG:: diff0 :: or STRONG:: diff1 ::, maps all instances of characters in the source and target strings.
+So all characters of STRONG:: xyz :: will be mapped to STRONG:: yzx ::. The mapping is based on ordinal position,
+so the first instance of STRONG:: x :: in the source is mapped to the first instance of STRONG:: x :: in the target.
+
+METHOD::diff3
+Reverses the mapping criterion of STRONG::diff2::, so the last instance of STRONG::x:: in the source is mapped to the last instance of STRONG::x:: in the target.
+
+METHOD::ld
+Compute and return the Levenshtein distance matrix for the source and target string.
+
+ARGUMENT::s
+The source string
+
+ARGUMENT::t
+The target string
+
+METHOD::parseld
+Generate a mapping between the source and target strings with a minimal number of
+changes using the Levenshtein distance matrix.
+
+ARGUMENT::table
+The Levenshtein distance matrix
+
+ARGUMENT::s
+The source string
+
+ARGUMENT::t
+The target string
+
+METHOD::study
+Generate a representation of the Levenshtein distance matrix
+that includes the source string in the first column and the target
+string in the first row.
+
+ARGUMENT::s
+The source string
+
+ARGUMENT::t
+The target string
+
+For example:
+CODE::
+StringMapper().study("abcd", "abc").do(_.postln)
+[  ,  , a, b, c ]
+[  , 0, 1, 2, 3 ]
+[ a, 1, 0, 1, 2 ]
+[ b, 2, 1, 0, 1 ]
+[ c, 3, 2, 1, 0 ]
+[ d, 4, 3, 2, 1 ]
+::
+
+
