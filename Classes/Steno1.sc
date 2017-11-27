@@ -1,4 +1,9 @@
+// Two Steno variants
+// Steno1 uses VarDiffString
+// Steno2 uses StringMapper to demonstrate an alternative factoring where callbacks are eliminated
+
 Steno1 : Steno {
+
 	initDiff {
 		var oldSynthList;
 		diff = VarDiffString.new(
@@ -51,6 +56,7 @@ Steno1 : Steno {
 				synthList = [];
 				argList = [];
 			},
+
 			returnFunc: { |src, trg |
 				if(verbosity > 1) { this.dumpStructure };
 				if(verbosity < 0) { src.postln; trg.postln; };
@@ -59,7 +65,78 @@ Steno1 : Steno {
 		)
 	}
 }
-/*
+
+Steno2 : Steno {
+
+	initDiff {
+		diff = StringMapper();
+	}
+
+	eval { |string|
+		var mapping;
+		string = string ? "";
+		cmdLine = string;
+		if(server.serverRunning.not) { Error("server not running").throw };
+		if(verbosity > 0) { string.postcs };
+
+		this.startGroup;				// add a limiter to the end of the signal chain
+		this.startMonitor;
+
+		protect {
+			server.openBundle;
+			string = diff.preprocess(string);
+			mapping = diff.diff(string);
+			this.update(mapping);
+		} {
+			server.closeBundle(server.latency);
+		};
+		if(verbosity > 1) { this.dumpStructure };
+		if(verbosity < 0) { diff.makeStringOfMapping(mapping).reverseDo(_.postln); };
+	}
+
+	update { |mappingArray|
+		var oldSynthList;
+		oldSynthList = synthList;
+		synthList = [];
+		argList = [];
+		this.initArguments;
+
+		mappingArray.do { | triple |
+			var token, sourceIndex, targetIndex, args, synth;
+			#token, sourceIndex, targetIndex = triple;
+			if(targetIndex.isNil) {																		// delete syth
+				oldSynthList[sourceIndex].release;
+			} {
+				args = this.calcNextArguments(token);
+
+				if (sourceIndex.isNil || argumentStack.replaceAll) {					// add synth
+					synth = this.newSynth(token, targetIndex, args);
+				} {
+					synth = oldSynthList[sourceIndex];
+						this.repositionSynth(synth, targetIndex, args);					// retain synth
+				};
+				synthList = synthList.add(synth);
+				argList = argList.add(args);
+			};
+		};
+		argumentStack = nil;			// is this necessary?  initArguments assigns a new argumentStack....
+
+	}
+
+	repositionSynth { |synth, targetIndex, args|
+		var target = synthList[targetIndex-1];
+		if(target.isNil) {
+			synth.moveToHead(group);
+		} {
+			synth.moveAfter(target);
+		};
+		synth.set(*args);
+		^synth;
+	}
+
+}
+
+	/*
 (
 s.waitForBoot {
 t = Steno1.new;
@@ -67,15 +144,24 @@ t.verbosity = -1;
 t.quelle(\a, { SinOsc.ar(Rand(200, 2130)) }); // quelle (aka source) produces sound
 t.filter(\f, { |input| LFPulse.kr(ExpRand(1, 10), 0, Rand(0.1, 0.5)) * input }); // filter processes sound
 t.filter(\g, { |input| CombL.ar(input, 0.2, Rand(0.03, 0.2), 1.3) });
+v = Steno2.new;
+v.verbosity = -1;
+v.quelle(\a, { SinOsc.ar(Rand(200, 2130)) }); // quelle (aka source) produces sound
+v.filter(\f, { |input| LFPulse.kr(ExpRand(1, 10), 0, Rand(0.1, 0.5)) * input }); // filter processes sound
+v.filter(\g, { |input| CombL.ar(input, 0.2, Rand(0.03, 0.2), 1.3) });
 }
 )
-
+s.plotTree
+t.fadeTime =10
 t.value("diff0/aafbaafb"); ""
-t.value("aafb"); ""
-t.value("aafbaafb"); ""
-t.value("aafb"); ""
-t.value("diff1/aafbaafb"); ""
-t.value("diff0/aafb"); ""
+t.value("diff1/aafb"); ""
+t.("")
+
+v.("")
+v.("aafbaafb"); ""
+v.value(""); ""
+v.value("diff1/aafbaafb"); ""
+v.value("diff0/aafb"); ""
 
 t.value("!aafbaaf"); ""
 t.value("faaf"); ""

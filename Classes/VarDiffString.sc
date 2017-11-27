@@ -26,8 +26,10 @@ VarDiffString {
 
 	init { prevTokens = ""; this.diff0; }
 
-	diff { | prevTokens, tokens |
-		^diffFunc.value(prevTokens, tokens);
+	diff { |  tokens |
+		var mapping = diffFunc.value(prevTokens, tokens);
+		prevTokens = tokens;
+		^mapping;
 	}
 
 	value { | tokens |
